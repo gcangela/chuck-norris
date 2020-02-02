@@ -13,17 +13,22 @@ const Container = styled.div`
 
 /**
  * TODO:
- * Add to favorites
- * Should also remove these from list as well
- * Store data in localstorage
+ * Prevent saving duplicates
+ * Handle api errors
  */
 
 const ChuckNorris = () => {
   const [jokes, setJokes] = React.useState<ChuckNorrisJoke[]>([]);
   const [favorites, setFavorites] = React.useState([]);
-  const [value, setValue] = useLocalStorage(FAVORITES_STORAGE_KEY);
+  const [storageValue, setStorageValue] = useLocalStorage(FAVORITES_STORAGE_KEY);
 
-  const handleClick = async () => {
+  React.useEffect(() => {
+    if (Boolean(storageValue)) {
+      setFavorites(JSON.parse(storageValue));
+    }
+  }, [storageValue, setFavorites]);
+
+  const fetchJokes = async () => {
     try {
       const response = await fetch10ChuckNorrisJokes();
       if (response.type === 'success') {
@@ -34,11 +39,27 @@ const ChuckNorris = () => {
     }
   };
 
+  const setFavoriteJoke = (id: number, action: 'add' | 'remove') => {
+    if (action === 'add') {
+      const favoriteJokeToAdd = jokes.find(joke => joke.id === id);
+      return setFavorites(favoriteJokes => {
+        setStorageValue(JSON.stringify([...favoriteJokes, favoriteJokeToAdd]));
+        return [...favoriteJokes, favoriteJokeToAdd];
+      });
+    }
+    if (action === 'remove') {
+      return setFavorites(favoriteJokes => {
+        setStorageValue(JSON.stringify(favoriteJokes.filter(joke => joke.id !== id)));
+        return favoriteJokes.filter(joke => joke.id !== id);
+      });
+    }
+  };
+
   return (
     <Container>
       Nuck Chorris
-      <JokesList jokes={jokes} />
-      <button onClick={handleClick}>Get some jokes</button>
+      <button onClick={fetchJokes}>Fetch some jokes</button>
+      <JokesList jokes={jokes} setFavoriteJoke={setFavoriteJoke} favoriteJokes={favorites} />
     </Container>
   );
 };
