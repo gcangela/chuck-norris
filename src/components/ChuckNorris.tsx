@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { FAVORITES_STORAGE_KEY } from '../app-constants';
@@ -19,7 +19,8 @@ const Container = styled.div`
  */
 
 const ChuckNorris = () => {
-  const [jokes, setJokes] = React.useState<ChuckNorrisJoke[]>([]);
+  const [randomJokes, setRandomJokes] = React.useState<ChuckNorrisJoke[]>([]);
+  const [fetchRandom, setFetchRandom] = useState(false);
   const [favorites, setFavorites] = React.useState([]);
   const [storageValue, setStorageValue] = useLocalStorage(FAVORITES_STORAGE_KEY);
 
@@ -29,11 +30,35 @@ const ChuckNorris = () => {
     }
   }, [storageValue, setFavorites]);
 
+  React.useEffect(() => {
+    let id;
+    if (fetchRandom) {
+      id = setInterval(() => {
+        fetchChuckNorrisJokes(1).then(({ value }) => {
+          const newJoke = value[0];
+          setFavorites(favoriteJokes => {
+            if (favoriteJokes.length < 10) {
+              setStorageValue(JSON.stringify([...favoriteJokes, newJoke]));
+              return [...favoriteJokes, newJoke];
+            } else {
+              setFetchRandom(false);
+              clearInterval(id);
+              return favoriteJokes;
+            }
+          });
+        });
+      }, 5000);
+    }
+    return () => {
+      clearInterval(id);
+    };
+  }, [fetchRandom]);
+
   const fetchRandomJokes = async () => {
     try {
       const response = await fetchChuckNorrisJokes(10);
       if (response.type === 'success') {
-        setJokes(response?.value);
+        setRandomJokes(response?.value);
       }
     } catch (error) {
       console.log(error);
@@ -42,7 +67,7 @@ const ChuckNorris = () => {
 
   const setFavoriteJoke = (id: number, action: 'add' | 'remove') => {
     if (action === 'add') {
-      const favoriteJokeToAdd = jokes.find(joke => joke.id === id);
+      const favoriteJokeToAdd = randomJokes.find(joke => joke.id === id);
       const isAlreadyInFavorites = Boolean(favorites.find(joke => joke.id === id));
       if (!isAlreadyInFavorites) {
         setFavorites(favoriteJokes => {
@@ -59,21 +84,13 @@ const ChuckNorris = () => {
     }
   };
 
-  const addRandomJokes = async () => {
-    for (let i = favorites.length; i < 10; i++) {
-      await delayAPICall(5000);
-      fetchChuckNorrisJokes(1).then(({ value }) => {
-        setFavorites(favoriteJokes => [...favoriteJokes, value[0]]);
-      });
-    }
-  };
-
   return (
     <Container>
       Nuck Chorris
       <button onClick={fetchRandomJokes}>Fetch some jokes</button>
-      <button onClick={addRandomJokes}>Randomize jokes</button>
-      <JokesList jokes={jokes} setFavoriteJoke={setFavoriteJoke} favoriteJokes={favorites} />
+      <button onClick={() => setFetchRandom(true)}>Randomize jokes</button>
+      <button onClick={() => setFetchRandom(false)}>Stop Randomize jokes</button>
+      <JokesList jokes={randomJokes} setFavoriteJoke={setFavoriteJoke} favoriteJokes={favorites} />
     </Container>
   );
 };
