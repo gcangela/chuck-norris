@@ -9,12 +9,6 @@
   },
   "plugins": ["react-hooks", "react", "prettier", "@typescript-eslint"],
   "rules": {
-    "prettier/prettier": [
-      "error",
-      {
-        "usePrettierrc": true
-      }
-    ],
     "react-hooks/rules-of-hooks": "error",
     "react-hooks/exhaustive-deps": "warn",
     "react/prop-types": 0

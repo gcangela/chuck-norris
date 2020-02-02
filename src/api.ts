@@ -1,10 +1,11 @@
 function fetchData<ResponseType>(endpoint: string = '', options = {}) {
-  return (): Promise<ResponseType> =>
-    fetch(endpoint, options)
+  return (jokeCount): Promise<ResponseType> =>
+    fetch(endpoint + jokeCount, options)
       .then(response => response.json())
       .then(payload => payload);
 }
 
-export const fetch10ChuckNorrisJokes = fetchData<JokeResponsePayload>('http://api.icndb.com/jokes/random/10');
+export const delayAPICall = (delayTime: number): Promise<string> =>
+  new Promise(resolve => setTimeout(() => resolve('finished waiting'), delayTime));
 
-export const fetchChuckNorrisJoke = fetchData<JokeResponsePayload>('http://api.icndb.com/jokes/random/1');
+export const fetchChuckNorrisJokes = fetchData<JokeResponsePayload>('http://api.icndb.com/jokes/random/');
