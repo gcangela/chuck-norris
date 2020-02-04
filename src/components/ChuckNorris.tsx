@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { FAVORITES_STORAGE_KEY } from '../app-constants';
 import JokesList from './JokesList';
-import { delayAPICall, fetchChuckNorrisJokes } from '../api';
+import { fetchChuckNorrisJokes } from '../api';
 
 const Container = styled.div`
   height: inherit;

@@ -5,7 +5,4 @@ function fetchData<ResponseType>(endpoint: string = '', options = {}) {
       .then(payload => payload);
 }
 
-export const delayAPICall = (delayTime: number): Promise<string> =>
-  new Promise(resolve => setTimeout(() => resolve('finished waiting'), delayTime));
-
 export const fetchChuckNorrisJokes = fetchData<JokeResponsePayload>('http://api.icndb.com/jokes/random/');
