@@ -1,25 +1,23 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import ChuckNorris from './components/ChuckNorris';
 import styled, { createGlobalStyle } from 'styled-components';
+import ChuckNorrisApp from './ChuckNorrisApp';
 
 const GlobalStyle = createGlobalStyle`
+  html,
   body {
     margin: 0;
     height: 100%;
+    font-family: monospace;
+    font-size: 16px;
   }
-`;
-const AppContainer = styled.div`
-  height: 100vh;
 `;
 
 const App = () => (
   <>
     <GlobalStyle />
-    <AppContainer>
-      <ChuckNorris />
-    </AppContainer>
+    <ChuckNorrisApp />
   </>
 );
 

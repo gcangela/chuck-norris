@@ -1,5 +1,5 @@
-function fetchData<ResponseType>(endpoint: string = '', options = {}) {
-  return (jokeCount): Promise<ResponseType> =>
+function fetchData<ResponseType>(endpoint: string = '', options: any = {}) {
+  return (jokeCount: number): Promise<ResponseType> =>
     fetch(endpoint + jokeCount, options)
       .then(response => response.json())
       .then(payload => payload);
