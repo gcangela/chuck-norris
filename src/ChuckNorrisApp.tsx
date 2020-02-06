@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { FAVORITES_STORAGE_KEY, MAX_JOKE_COUNT, mockData } from './app-constants';
-import { ButtonGroup, MainHeading, Button } from './components/styles';
+import { MainHeading, Button } from './components/styles';
 import JokesList from './components/JokesList';
 import { fetchChuckNorrisJokes } from './api';
 
@@ -13,25 +13,28 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 40px;
+  padding: 40px 20px;
 `;
 
 const AppContainer = styled.div`
-  height: 100vh;
+  height: 100%;
+`;
+
+const ListToggleButton = styled(Button)`
+  background-color: #ff4040;
 `;
 
 /**
  * TODO:
  * Handle empty states
- * Refactor JokesList
- * Create a tab to toggle between faves and random jokes
  */
 
 const ChuckNorrisApp = () => {
   const [randomJokes, setRandomJokes] = React.useState<ChuckNorrisJoke[]>([]);
-  const [fetchRandom, setFetchRandom] = useState(false);
+  const [jokeFetchTimer, setJokeFetchTimer] = useState(false);
   const [favorites, setFavorites] = React.useState([]);
   const [storageValue, setStorageValue] = useLocalStorage(FAVORITES_STORAGE_KEY);
+  const [currentTabIndex, setCurrentTabIndex] = useState(1);
 
   useEffect(() => {
     if (Boolean(storageValue)) {
@@ -41,7 +44,7 @@ const ChuckNorrisApp = () => {
 
   useEffect(() => {
     let id;
-    if (fetchRandom) {
+    if (setJokeFetchTimer) {
       id = setInterval(() => {
         (async () => {
           try {
@@ -52,25 +55,25 @@ const ChuckNorrisApp = () => {
                 setStorageValue(JSON.stringify([...favoriteJokes, newJoke]));
                 return [...favoriteJokes, newJoke];
               } else {
-                setFetchRandom(false);
+                setJokeFetchTimer(false);
                 clearInterval(id);
                 return favoriteJokes;
               }
             });
           } catch (error) {
-            setFetchRandom(false);
+            setJokeFetchTimer(false);
             // captureException(e) -- example of using sentry.io
             throw error; // Throw the error, in case you have error boundaries that will catch errors
           }
         })();
-      }, 5000);
+      }, 1000);
     }
     return () => {
       clearInterval(id);
     };
-  }, [fetchRandom]);
+  }, [jokeFetchTimer]);
 
-  const fetchRandomJokes = async () => {
+  const fetch10RandomJokes = async () => {
     try {
       const response = await fetchChuckNorrisJokes(10);
       if (response.type === 'success') {
@@ -105,12 +108,21 @@ const ChuckNorrisApp = () => {
     <AppContainer>
       <Container>
         <MainHeading>Chuck Norris App</MainHeading>
-        <ButtonGroup>
-          <Button onClick={fetchRandomJokes}>Fetch some jokes</Button>
-          <Button onClick={() => setFetchRandom(true)}>Randomize jokes</Button>
-          <Button onClick={() => setFetchRandom(false)}>Stop Randomize jokes</Button>
-        </ButtonGroup>
-        <JokesList jokes={mockData} setFavoriteJoke={setFavoriteJoke} favoriteJokes={favorites} />
+        <h3>Toggle between the joke lists</h3>
+        <div>
+          <Button onClick={() => setJokeFetchTimer(true)}>Randomize jokes</Button>
+          <Button onClick={() => setJokeFetchTimer(false)}>Stop Randomize jokes</Button>
+          <ListToggleButton onClick={() => setCurrentTabIndex(0)}>Random jokes</ListToggleButton>
+          <ListToggleButton onClick={() => setCurrentTabIndex(1)}>Favorite jokes</ListToggleButton>
+        </div>
+        <JokesList
+          jokes={randomJokes}
+          setFavoriteJoke={setFavoriteJoke}
+          favoriteJokes={favorites}
+          setJokeFetchTimer={setJokeFetchTimer}
+          fetch10RandomJokes={fetch10RandomJokes}
+          currentTabIndex={currentTabIndex}
+        />
       </Container>
     </AppContainer>
   );
