@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { FAVORITES_STORAGE_KEY, MAX_JOKE_COUNT, mockData } from './app-constants';
-import { MainHeading, Button } from './components/styles';
+import { FAVORITES_STORAGE_KEY, MAX_JOKE_COUNT } from './app-constants';
+import { MainHeading, Button, ButtonGroup } from './components/styles';
 import JokesList from './components/JokesList';
-import { fetchChuckNorrisJokes } from './api';
+import { fetchChuckNorrisJokes, sleep } from './api';
 
 const Container = styled.div`
   height: inherit;
@@ -14,37 +14,46 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   padding: 40px 20px;
+  h3 {
+    text-align: center;
+  }
 `;
 
 const AppContainer = styled.div`
   height: 100%;
 `;
 
-const ListToggleButton = styled(Button)`
-  background-color: #ff4040;
+const ListToggleButton = styled<{ active: boolean }>(Button)`
+  color: black;
+  padding: 0 15px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  ${({ active }) =>
+    active
+      ? `color: #fff;
+  background-color: #1890ff;`
+      : ` background-color: #fff;
+  border-color: #d9d9d9;`}
 `;
-
-/**
- * TODO:
- * Handle empty states
- */
 
 const ChuckNorrisApp = () => {
   const [randomJokes, setRandomJokes] = React.useState<ChuckNorrisJoke[]>([]);
   const [jokeFetchTimer, setJokeFetchTimer] = useState(false);
-  const [favorites, setFavorites] = React.useState([]);
+  const [favorites, setFavorites] = React.useState<ChuckNorrisJoke[]>([]);
   const [storageValue, setStorageValue] = useLocalStorage(FAVORITES_STORAGE_KEY);
   const [currentTabIndex, setCurrentTabIndex] = useState(1);
+  const [loadingState, setLoadingState] = useState<{ loading: boolean; message: string }>({ loading: false, message: '' });
 
   useEffect(() => {
     if (Boolean(storageValue)) {
       setFavorites(JSON.parse(storageValue));
     }
-  }, [storageValue, setFavorites]);
+  }, [storageValue]);
 
   useEffect(() => {
     let id;
-    if (setJokeFetchTimer) {
+    if (jokeFetchTimer) {
       id = setInterval(() => {
         (async () => {
           try {
@@ -66,7 +75,7 @@ const ChuckNorrisApp = () => {
             throw error; // Throw the error, in case you have error boundaries that will catch errors
           }
         })();
-      }, 1000);
+      }, 5000);
     }
     return () => {
       clearInterval(id);
@@ -74,48 +83,49 @@ const ChuckNorrisApp = () => {
   }, [jokeFetchTimer]);
 
   const fetch10RandomJokes = async () => {
+    setLoadingState({ loading: true, message: 'Fetching 10 random jokes...' });
     try {
+      // mimic a slower network so the loading state can be shown a bit longer
+      await sleep(350);
       const response = await fetchChuckNorrisJokes(10);
       if (response.type === 'success') {
-        setRandomJokes(response?.value);
+        setRandomJokes(response.value);
       }
+      setLoadingState({ loading: false, message: '' });
     } catch (error) {
+      setLoadingState({ loading: false, message: '' });
       // captureException(e) -- example of using sentry.io
       throw error; // Throw the error, in case you have error boundaries that will catch errors
     }
   };
 
   const setFavoriteJoke = (id: number, action: 'add' | 'remove') => {
+    const favoriteJokeToAdd = randomJokes.find(joke => joke.id === id);
+    const isAlreadyInFavorites = Boolean(favorites.find(joke => joke.id === id));
     if (action === 'add') {
-      const favoriteJokeToAdd = randomJokes.find(joke => joke.id === id);
-      const isAlreadyInFavorites = Boolean(favorites.find(joke => joke.id === id));
       if (!isAlreadyInFavorites) {
-        setFavorites(favoriteJokes => {
-          setStorageValue(JSON.stringify([...favoriteJokes, favoriteJokeToAdd]));
-          return [...favoriteJokes, favoriteJokeToAdd];
-        });
+        setStorageValue(JSON.stringify([...favorites, favoriteJokeToAdd]));
       }
     }
     if (action === 'remove') {
-      return setFavorites(favoriteJokes => {
-        setStorageValue(JSON.stringify(favoriteJokes.filter(joke => joke.id !== id)));
-        return favoriteJokes.filter(joke => joke.id !== id);
-      });
+      setStorageValue(JSON.stringify(favorites.filter(joke => joke.id !== id)));
     }
   };
-
   return (
     <AppContainer>
       <Container>
         <MainHeading>Chuck Norris App</MainHeading>
         <h3>Toggle between the joke lists</h3>
-        <div>
-          <Button onClick={() => setJokeFetchTimer(true)}>Randomize jokes</Button>
-          <Button onClick={() => setJokeFetchTimer(false)}>Stop Randomize jokes</Button>
-          <ListToggleButton onClick={() => setCurrentTabIndex(0)}>Random jokes</ListToggleButton>
-          <ListToggleButton onClick={() => setCurrentTabIndex(1)}>Favorite jokes</ListToggleButton>
-        </div>
+        <ButtonGroup>
+          <ListToggleButton active={currentTabIndex === 0} onClick={() => setCurrentTabIndex(0)}>
+            Random jokes
+          </ListToggleButton>
+          <ListToggleButton active={currentTabIndex === 1} onClick={() => setCurrentTabIndex(1)}>
+            Favorite jokes
+          </ListToggleButton>
+        </ButtonGroup>
         <JokesList
+          loadingState={loadingState}
           jokes={randomJokes}
           setFavoriteJoke={setFavoriteJoke}
           favoriteJokes={favorites}

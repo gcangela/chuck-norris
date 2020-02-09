@@ -1,7 +1,19 @@
 import styled from 'styled-components';
 
 export const ButtonGroup = styled.div`
-  margin-bottom: 24px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  button:not(:last-of-type) {
+    margin-right: 8px;
+    margin-bottom: 0px;
+  }
+  @media only screen and (max-width: 374px) {
+    button:not(:last-of-type) {
+      margin-right: 0px;
+      margin-bottom: 8px;
+    }
+  }
 `;
 
 export const MainHeading = styled.h1`
@@ -32,16 +44,13 @@ export const ListItem = styled.li`
   grid-row-gap: 8px;
   align-items: center;
   grid-template-columns: 5fr 1fr;
-  grid-template-rows: min-content;
   line-height: 28px;
-  padding: 8px 0;
   font-size: 14px;
   span {
     position: relative;
   }
   @media only screen and (max-width: 767px) {
     grid-template-columns: 1fr;
-    grid-template-rows: min-content min-content;
     button {
       grid-row: 2;
       max-width: 150px;
@@ -50,8 +59,9 @@ export const ListItem = styled.li`
   }
 `;
 
-export const Button = styled.button<{ type?: 'add' | 'remove' }>`
-  background: #2194ff;
+export const Button = styled.button`
+  color: #fff;
+  background-color: #1890ff;
   color: white;
   border-radius: 4px;
   padding: 4px 8px;

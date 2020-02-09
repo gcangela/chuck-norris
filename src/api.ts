@@ -6,3 +6,5 @@ function fetchData<ResponseType>(endpoint: string = '', options: any = {}) {
 }
 
 export const fetchChuckNorrisJokes = fetchData<JokeResponsePayload>('http://api.icndb.com/jokes/random/');
+
+export const sleep = (ms: number): Promise<any> => new Promise(resolve => setTimeout(() => resolve(), ms));
